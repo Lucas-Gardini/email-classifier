@@ -1,10 +1,7 @@
-import { Global, Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Email, EmailSchema } from './emails.schema';
-import {
-  EmailSuggestion,
-  EmailSuggestionSchema,
-} from './email-suggestion.schema';
+import { Global, Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { Email, EmailSchema } from "./emails.schema";
+import { EmailSuggestion, EmailSuggestionSchema } from "./email-suggestion.schema";
 
 @Global()
 @Module({
