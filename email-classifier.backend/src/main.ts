@@ -9,10 +9,12 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle("Cats example")
-    .setDescription("The cats API description")
-    .setVersion("1.0")
-    .addTag("cats")
+    .setTitle("Email Classifier")
+    .setDescription("Classificador automático de emails com IA")
+    .setVersion("1.0.0")
+    .addTag("health", "Verificação de saúde da aplicação")
+    .addTag("emails", "Operações de listagem e classificação de emails")
+    .addServer(process.env.API_BASE_URL ?? "http://localhost:3000", "Servidor padrão")
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);
