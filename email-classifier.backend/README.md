@@ -1,98 +1,213 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Email Classifier - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API para ingestão, classificação assíncrona e sugestão de resposta para e-mails usando OpenAI.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Visão Geral
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Este serviço recebe e-mails (assunto, remetente e corpo), armazena, classifica-os em categorias (productive | unproductive | unclassified), gera um resumo e produz uma sugestão de resposta assistida por IA. O processamento da classificação é **assíncrono** via fila (BullMQ + Redis), permitindo alta resiliência e desacoplamento entre ingestão e enriquecimento.
 
-## Project setup
+## 🧠 Principais Funcionalidades
 
-```bash
-$ npm install
+- Cadastro de e-mails para classificação (imediata na fila)
+- Classificação automática via OpenAI (prompt estruturado + validação de schema com Zod)
+- Geração de resumo conciso do conteúdo
+- Sugestão de resposta adequada ao contexto
+- Consulta paginada e filtrada de e-mails com enriquecimento (resumo + sugestão)
+
+## 🏗️ Arquitetura (High-Level)
+
+```text
+[Client] --> (HTTP) --> [NestJS API]
+	|  POST /email/classify
+	|--> Persiste Email (status = pending)
+	|--> Enfileira Job "classify-email" -----> [BullMQ Queue / Redis] ----> [Worker AsyncClassifier]
+																												|                     |
+																												| (fetch email)       |
+																												|--> OpenAI (summarize + suggest)
+																												|--> Atualiza Email (status=classified, classification, link para suggestion)
+																												|--> Upsert EmailSuggestion
 ```
 
-## Compile and run the project
+## 📦 Tecnologias Utilizadas
 
-```bash
-# development
-$ npm run start
+| Categoria            | Ferramenta                                |
+| -------------------- | ----------------------------------------- |
+| Runtime              | Node.js (TypeScript)                      |
+| Framework            | NestJS 11                                 |
+| Fila                 | BullMQ + Redis (via `@nestjs/bullmq`)     |
+| Banco de Dados       | MongoDB (Mongoose 8)                      |
+| IA                   | OpenAI Responses API + Zod Parsing        |
+| Validação            | class-validator / class-transformer / Zod |
+| Documentação         | Swagger (`@nestjs/swagger`)               |
+| Tipagem de respostas | semantic-response                         |
+| Config/env           | @nestjs/config + auto-type-env            |
+| Lint/Format          | ESLint 9 + Prettier 3                     |
 
-# watch mode
-$ npm run start:dev
+## 🔄 Fluxo de Processamento
 
-# production mode
-$ npm run start:prod
+1. Cliente envia POST `/email/classify` com (subject?, sender?, body)
+2. API salva documento `Email` (status=pending, classification=unclassified)
+3. Job é enviado para fila `async-classifier`
+4. Worker (`AsyncClassifierConsumer`) consome o job e chama `AsyncClassifierService`
+5. Serviço chama OpenAI duas vezes: (a) summarize/classify (b) sugestão de resposta
+6. Upsert em `EmailSuggestion` + atualização do Email (status=classified, classification, suggestion ref)
+7. Consulta posterior (`GET /email/list`) retorna dados enriquecidos (populate suggestion)
+
+## 🗂️ Estrutura de Pastas (principal)
+
+```text
+src/
+	main.ts                # Bootstrap Nest
+	app.module.ts          # Módulo raiz
+	modules/
+		email/               # Endpoints de listagem e ingestão
+		async-classifier/    # Worker + serviço assíncrono
+		openai/              # Integração com OpenAI (summarize + suggest)
+	schemas/               # Schemas Mongoose (Email, EmailSuggestion)
 ```
 
-## Run tests
+## 🧾 Modelos (Schemas)
 
-```bash
-# unit tests
-$ npm run test
+### Email
 
-# e2e tests
-$ npm run test:e2e
+| Campo          | Tipo                                         | Observações                   |
+| -------------- | -------------------------------------------- | ----------------------------- |
+| subject        | string                                       | indexado, opcional no DTO     |
+| sender         | string                                       | indexado, opcional no DTO     |
+| body           | string                                       | conteúdo do e-mail            |
+| status         | enum(pending\|classified\|error)             | default: pending              |
+| classification | enum(productive\|unproductive\|unclassified) | default: unclassified         |
+| suggestion     | ref EmailSuggestion                          | preenchido após processamento |
 
-# test coverage
-$ npm run test:cov
+### EmailSuggestion
+
+| Campo             | Tipo                | Observações                     |
+| ----------------- | ------------------- | ------------------------------- |
+| email             | ObjectId(ref Email) | 1-1 (upsert)                    |
+| summary           | string              | resumo conciso (até ~500 chars) |
+| suggestedResponse | string              | resposta sugerida               |
+
+## 📩 DTOs Principais
+
+### ClassifyEmailDto
+
+```jsonc
+{
+  "subject": "Reunião de status", // opcional
+  "sender": "joao@empresa.com", // opcional
+  "body": "Olá, precisamos alinhar...", // obrigatório
+}
 ```
 
-## Deployment
+### EmailSearchDto (query params)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+| Param   | Tipo                     | Exemplo         | Descrição                              |
+| ------- | ------------------------ | --------------- | -------------------------------------- |
+| subject | string                   | relatório       | Filtro contém (regex case-insensitive) |
+| sender  | string                   | maria@          | Filtro contém                          |
+| body    | string                   | seguem os dados | Filtro contém                          |
+| status  | pending/classified/error | classified      | Filtra por status                      |
+| page    | number >=1               | 1               | Página                                 |
+| limit   | 1-100                    | 20              | Tamanho página                         |
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🔌 Endpoints (Resumo)
+
+| Método | Rota                   | Descrição                                            |
+| ------ | ---------------------- | ---------------------------------------------------- |
+| GET    | `/email/list`          | Lista e-mails paginados + suggestion populate        |
+| POST   | `/email/classify`      | Enfileira classificação de um e-mail                 |
+| POST   | `/email/classify/bulk` | Processa vários em sequência (não usa fila por item) |
+
+Swagger disponível (quando configurado) em: `/api` (ajuste conforme seu `main.ts`).
+
+## ⚙️ Variáveis de Ambiente
+
+| Nome                   | Obrigatório | Descrição                                                       |
+| ---------------------- | ----------- | --------------------------------------------------------------- |
+| `OPENAI_API_KEY`       | ✅          | Chave da API OpenAI                                             |
+| `OPENAI_DEFAULT_MODEL` | ✅          | Modelo (ex: `gpt-4.1-mini` ou similar compatível Responses API) |
+| `MONGODB_URI`          | ✅          | String de conexão MongoDB                                       |
+| `REDIS_HOST`           | ✅          | Host Redis para BullMQ                                          |
+| `REDIS_PORT`           | ✅          | Porta Redis (ex: 6379)                                          |
+| `REDIS_PASSWORD`       | ❌          | Se seu Redis exigir auth                                        |
+
+Recomenda-se criar um arquivo `.env` e rodar `npm run gen:env` para gerar tipagem (`environment.d.ts`).
+
+## 🐳 Execução com Docker Compose
+
+Arquivo: `docker-compose.yml` (ajuste se necessário)
+
+Passos:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker compose up -d --build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Isso deve subir: API + Redis + (Mongo se definido). Certifique-se de configurar o serviço Mongo no compose caso ainda não exista.
 
-## Resources
+## ▶️ Execução Local (sem Docker)
 
-Check out a few resources that may come in handy when working with NestJS:
+Pré-requisitos:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- Node.js 20+
+- MongoDB em execução
+- Redis em execução
 
-## Support
+Instalação:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm install
+```
 
-## Stay in touch
+Rodar dev:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npm run start:dev
+```
 
-## License
+Build + produção:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm run build
+npm run start:prod
+```
+
+## 🧪 Testes (Sugestão Futuras Implementações)
+
+Ainda não há suíte de testes. Sugestão:
+
+- Unit: OpenaiService (mocks), AsyncClassifierService
+- E2E: fluxo POST classify -> worker -> GET list
+
+## 🛡️ Observabilidade & Logs
+
+- Uso do `Logger` nativo Nest em pontos críticos (classificação / sugestão)
+- Sugestão futura: adicionar métricas (Prometheus) e tracing (OpenTelemetry)
+
+## 🚧 Roadmap Sugerido
+
+- [ ] Endpoint para reprocessar e-mail com erro
+- [ ] Cancelamento/remoção de e-mail pendente
+- [ ] Filtro por classificação final
+- [ ] Paginação cursor-based para grandes volumes
+- [ ] Autenticação (JWT / Key) e rate limiting
+- [ ] Testes automatizados (unit + e2e)
+- [ ] Cache de respostas OpenAI para conteúdos idempotentes
+- [ ] Webhook/WS para notificar cliente quando classificação concluir
+- [ ] Retentativa automática em caso de falha OpenAI
+
+## 🔐 Boas Práticas / Notas
+
+- Não exponha diretamente a `OPENAI_API_KEY`
+- Trate limites de custo da API (rate / budget)
+- Sanitização de input já mitigada via DTO + regex escape
+- Corpo do e-mail pode ser grande: avaliar size limits / compressão
+
+## 🤝 Contribuição
+
+1. Fork
+2. Branch: `feat/nome-funcionalidade`
+3. Commit semântico (ex: `feat: adiciona filtro por classification`)
+4. PR com descrição clara
