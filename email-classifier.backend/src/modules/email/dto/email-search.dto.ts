@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsEnum, IsNumber, IsNumberString, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 import { EmailClassificationStatus } from "src/schemas/emails.schema";
 
 export class EmailSearchDto {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { EmailService } from "./email.service";
 import { ClassifyEmailDto } from "../async-classifier/dto/classify-email.dto";
 import { EmailSearchDto } from "./dto/email-search.dto";
@@ -39,7 +39,7 @@ export class EmailController {
         } else {
           processingStatus.failedIndexes.push(i);
         }
-      } catch (error) {
+      } catch {
         processingStatus.failedIndexes.push(i);
       }
     }

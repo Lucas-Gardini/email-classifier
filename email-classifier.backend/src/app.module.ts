@@ -7,7 +7,6 @@ import { DatabaseModule } from "./schemas/database.module";
 import { BullModule } from "@nestjs/bullmq";
 import { EmailModule } from "./modules/email/email.module";
 import { AsyncClassifierModule } from "./modules/async-classifier/async-classifier.module";
-import { OpenaiModule } from "./modules/openai/openai.module";
 
 @Module({
   imports: [

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { HttpResponse, IServiceResponse } from "semantic-response";
-import { Email } from "src/schemas/emails.schema";
+import { Email, EmailClassificationStatus } from "src/schemas/emails.schema";
 import { ClassifyEmailDto } from "../async-classifier/dto/classify-email.dto";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
@@ -20,7 +20,7 @@ export class EmailService {
   }
 
   async getEmails(emailSearchDto: EmailSearchDto): Promise<IServiceResponse<Email[]>> {
-    const filter: any = {};
+    const filter: Partial<Record<keyof Email, any>> & { status?: EmailClassificationStatus } = {};
 
     if (emailSearchDto.subject) {
       filter.subject = { $regex: this.escapeRegex(emailSearchDto.subject), $options: "i" };
@@ -31,9 +31,7 @@ export class EmailService {
     if (emailSearchDto.body) {
       filter.body = { $regex: this.escapeRegex(emailSearchDto.body), $options: "i" };
     }
-    if (emailSearchDto.status) {
-      filter.status = emailSearchDto.status;
-    }
+    if (emailSearchDto.status) filter.status = emailSearchDto.status;
 
     const projection = { __v: 0 };
 
