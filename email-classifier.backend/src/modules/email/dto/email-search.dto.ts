@@ -4,6 +4,11 @@ import { EmailClassificationStatus } from "src/schemas/emails.schema";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class EmailSearchDto {
+  @ApiProperty({ required: false, description: "ID do email", example: "64b8f0c2e1b0c8a1d2f3g4h5" })
+  @IsString()
+  @IsOptional()
+  id: string;
+
   @ApiProperty({ required: false, description: "Filtro por assunto (contém)", example: "relatório" })
   @IsString()
   @IsOptional()

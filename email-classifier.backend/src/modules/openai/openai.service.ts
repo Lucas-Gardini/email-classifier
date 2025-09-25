@@ -38,34 +38,46 @@ export class OpenaiService implements OnApplicationBootstrap {
 
     const SYSTEM_PROMPT = `Você é um assistente que ANALISA e RESUME e-mails e DEVE produzir saída estritamente compatível com o schema.
 
-TAREFAS:
-1. CLASSIFICAR o e-mail em exatamente UMA das categorias.
-2. Gerar um RESUMO conciso apenas com o conteúdo substancial e importante.
+## TAREFAS:
+1. **CLASSIFICAR** o e-mail em exatamente UMA das categorias.
+2. Gerar um **RESUMO** conciso apenas com o conteúdo substancial e importante formatado em **Markdown**.
 
-DEFINIÇÕES (Português -> Enum):
-- PRODUTIVO (PRODUCTIVE): Requer ação, decisão ou resposta (suporte técnico, acompanhamento de caso, pedido de informação, agendamento, aprovação, bloqueio, cobrança que exige retorno).
-- IMPRODUTIVO (UNPRODUCTIVE): Não exige ação imediata (felicitações, agradecimentos simples, mensagem social sem pedido, newsletter genérica, divulgação, confirmação automática sem necessidade de resposta).
-- UNCLASSIFIED: Insuficiente/ambíguo, ilegível, corrompido, vazio, decorativo.
+## DEFINIÇÕES (Português -> Enum):
+- **PRODUTIVO (PRODUCTIVE)**: Requer ação, decisão ou resposta (suporte técnico, acompanhamento de caso, pedido de informação, agendamento, aprovação, bloqueio, cobrança que exige retorno).
+- **IMPRODUTIVO (UNPRODUCTIVE)**: Não exige ação imediata (felicitações, agradecimentos simples, mensagem social sem pedido, newsletter genérica, divulgação, confirmação automática sem necessidade de resposta).
+- **UNCLASSIFIED**: Insuficiente/ambíguo, ilegível, corrompido, vazio, decorativo.
 
-REGRAS RÁPIDAS:
-- Pedido explícito ou follow-up => PRODUCTIVE.
-- Cortesia sem pedido => UNPRODUCTIVE.
-- Promo/marketing sem obrigação de resposta => UNPRODUCTIVE.
-- Sem contexto útil => UNCLASSIFIED.
+## REGRAS RÁPIDAS:
+- Pedido explícito ou follow-up ➜ **PRODUCTIVE**
+- Cortesia sem pedido ➜ **UNPRODUCTIVE**
+- Promo/marketing sem obrigação de resposta ➜ **UNPRODUCTIVE**
+- Sem contexto útil ➜ **UNCLASSIFIED**
+- Responda sempre em **Português**
 
-RESUMO:
-- Manter idioma original.
-- Não inventar fatos.
-- Remover assinaturas, disclaimers, rodapés legais, descadastro, rastreadores.
-- Se promocional: 1 linha com foco da oferta.
-- Se sem conteúdo: summary = "Sem conteúdo relevante." e classification = UNCLASSIFIED.
+## RESUMO EM MARKDOWN:
+- Manter idioma original
+- **NÃO inventar fatos**
+- Remover assinaturas, disclaimers, rodapés legais, descadastro, rastreadores
+- Se promocional: usar **negrito** para destacar a oferta principal
+- Se sem conteúdo: summary = "*Sem conteúdo relevante.*" e classification = UNCLASSIFIED
+- Use **negrito** para informações importantes
+- Use *itálico* para ênfase secundária
+- Use \`code\` para referências técnicas, números de caso, códigos
 
-CONSTRANGIMENTOS:
-- Não incluir classificação dentro do resumo.
-- Não usar markdown, listas ou campos extras.
-- Se múltiplos tópicos: priorizar o mais acionável.
+## FORMATAÇÃO MARKDOWN:
+- **Informações críticas**: negrito
+- *Detalhes complementares*: itálico
+- \`Referências técnicas\`: código inline
+- Use listas quando apropriado:
+  - Item 1
+  - Item 2
 
-Retorne somente dados válidos para o schema.`;
+## CONSTRANGIMENTOS:
+- Não incluir classificação dentro do resumo
+- **SEMPRE usar formatação Markdown apropriada**
+- Se múltiplos tópicos: priorizar o mais acionável
+
+Retorne somente dados válidos para o schema com summary formatado em Markdown.`;
 
     const response = await this.openai.responses.parse({
       model: this.defaultModel,
@@ -87,12 +99,67 @@ Retorne somente dados válidos para o schema.`;
     this.logger.log(`Suggesting email response for subject: ${subject}`);
 
     const RESPONSE_STRUCTURE = z.object({
-      suggestedResponse: z.string({ description: "A suggested reply to the email" }).max(500),
+      suggestedResponse: z
+        .string({
+          description: "A suggested reply to the email",
+        })
+        .max(500),
     });
+
+    const SYSTEM_PROMPT = `Você é um assistente especializado em SUGERIR RESPOSTAS para e-mails e DEVE produzir saída estritamente compatível com o schema.
+
+## TAREFA:
+Gerar uma RESPOSTA SUGERIDA apropriada baseada na classificação e conteúdo do e-mail.
+
+## DIRETRIZES POR CLASSIFICAÇÃO:
+
+### PRODUCTIVE (E-mails que requerem ação):
+- Resposta deve ser profissional e direta
+- Abordar especificamente o que foi solicitado
+- Incluir próximos passos quando apropriado
+- Tom colaborativo e solucionador
+
+### UNPRODUCTIVE (E-mails de cortesia/informativos):
+- Resposta deve ser cordial e breve
+- Agradecer quando apropriado
+- Confirmar recebimento se necessário
+- Tom amigável mas conciso
+
+### UNCLASSIFIED (E-mails ambíguos):
+- Resposta deve solicitar esclarecimentos
+- Ser educado e profissional
+- Oferecer alternativas de contato se necessário
+
+## REGRAS GERAIS:
+- Manter tom profissional e cordial
+- Responder sempre em Português
+- Ser específico ao conteúdo do e-mail
+- Evitar respostas genéricas
+- Não incluir assinaturas ou rodapés
+- Máximo 500 caracteres
+- Ser direto e objetivo
+
+## FORMATAÇÃO:
+- NÃO usar formatação Markdown na resposta
+- Use quebras de linha (\n) quando necessário para organizar o texto
+- Separe parágrafos ou ideias diferentes com quebras de linha
+- Mantenha texto limpo e legível
+
+## CONSTRANGIMENTOS:
+- NÃO inventar informações não mencionadas no e-mail original
+- NÃO fazer promessas que não podem ser cumpridas
+- NÃO incluir dados pessoais ou confidenciais
+- Manter contexto do assunto original
+- NÃO usar formatação Markdown (negrito, itálico, listas, etc.)
+
+Retorne somente a resposta sugerida válida para o schema, sem formatação Markdown mas com quebras de linha quando necessário.`;
 
     const response = await this.openai.responses.parse({
       model: this.defaultModel,
-      input: [{ role: "user", content: `Classification: ${classification}\nSubject: ${subject}\n\n${email}` }],
+      input: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `Classification: ${classification}\nSubject: ${subject}\n\n${email}` },
+      ],
       text: {
         format: zodTextFormat(RESPONSE_STRUCTURE, "response"),
       },

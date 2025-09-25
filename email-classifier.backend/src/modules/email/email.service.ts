@@ -19,9 +19,16 @@ export class EmailService {
     return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  async getEmails(emailSearchDto: EmailSearchDto): Promise<IServiceResponse<Email[]>> {
-    const filter: Partial<Record<keyof Email, any>> & { status?: EmailClassificationStatus } = {};
+  async getEmails(emailSearchDto: EmailSearchDto): Promise<IServiceResponse<Email[]> | IServiceResponse> {
+    const filter: Partial<Record<keyof Email, any>> & { _id?: Types.ObjectId; status?: EmailClassificationStatus } = {};
 
+    if (emailSearchDto.id) {
+      if (Types.ObjectId.isValid(emailSearchDto.id)) {
+        filter._id = new Types.ObjectId(emailSearchDto.id);
+      } else {
+        return HttpResponse.badRequest(undefined, "ID de email inválido.");
+      }
+    }
     if (emailSearchDto.subject) {
       filter.subject = { $regex: this.escapeRegex(emailSearchDto.subject), $options: "i" };
     }
