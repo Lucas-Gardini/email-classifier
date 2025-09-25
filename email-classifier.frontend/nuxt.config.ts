@@ -1,7 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-	compatibilityDate: "2025-07-15",
-	devtools: { enabled: true },
-	modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/ui"],
-	css: ["~/assets/css/main.css"],
+				compatibilityDate: "2025-07-15",
+				devtools: { enabled: true },
+				modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/ui", "nuxt-lottie", "@nuxtjs/mdc"],
+				css: ["~/assets/css/main.css"],
+
+				ssr: false,
+
+				runtimeConfig: {
+								public: {
+												backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || "http://localhost:3000/api",
+								},
+				},
 });
