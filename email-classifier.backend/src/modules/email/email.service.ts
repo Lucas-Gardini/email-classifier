@@ -42,18 +42,29 @@ export class EmailService {
 
     const projection = { __v: 0 };
 
-    const emails = await this.emailModel
-      .find(filter, projection)
-      .populate({
-        path: "suggestion",
-        select: "-_id -__v -email -createdAt -updatedAt",
-      })
-      .skip((emailSearchDto.page - 1) * emailSearchDto.limit)
-      .limit(emailSearchDto.limit)
-      .lean()
-      .exec();
+    const [items, total] = await Promise.all([
+      this.emailModel
+        .find(filter, projection)
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "suggestion",
+          select: "-_id -__v -email -createdAt -updatedAt",
+        })
+        .skip((emailSearchDto.page - 1) * emailSearchDto.limit)
+        .limit(emailSearchDto.limit)
+        .lean()
+        .exec(),
+      this.emailModel.countDocuments(filter),
+    ]);
 
-    return HttpResponse.ok(emails);
+    const data = {
+      items,
+      total,
+      page: emailSearchDto.page,
+      limit: emailSearchDto.limit,
+    };
+
+    return HttpResponse.ok(data, "Emails encontrados com sucesso.");
   }
 
   async classifyEmail(classifyEmailDto: ClassifyEmailDto): Promise<IServiceResponse<Types.ObjectId>> {

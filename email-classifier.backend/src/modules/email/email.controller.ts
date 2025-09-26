@@ -24,10 +24,17 @@ export class EmailController {
     schema: {
       type: "object",
       properties: {
-        items: { type: "array", items: { type: "object" } },
-        total: { type: "number" },
-        page: { type: "number" },
-        limit: { type: "number" },
+        success: { type: "boolean" },
+        data: {
+          type: "object",
+          properties: {
+            items: { type: "array", items: { type: "object" } },
+            total: { type: "number" },
+            page: { type: "number" },
+            limit: { type: "number" },
+          },
+        },
+        message: { type: "string" },
       },
     },
   })

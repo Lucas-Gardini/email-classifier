@@ -38,46 +38,38 @@ export class OpenaiService implements OnApplicationBootstrap {
 
     const SYSTEM_PROMPT = `Você é um assistente que ANALISA e RESUME e-mails e DEVE produzir saída estritamente compatível com o schema.
 
-## TAREFAS:
-1. **CLASSIFICAR** o e-mail em exatamente UMA das categorias.
-2. Gerar um **RESUMO** conciso apenas com o conteúdo substancial e importante formatado em **Markdown**.
+TAREFAS:
+1. CLASSIFICAR o e-mail em exatamente UMA das categorias.
+2. Gerar um RESUMO conciso apenas com o conteúdo substancial e importante, em texto plano.
 
-## DEFINIÇÕES (Português -> Enum):
-- **PRODUTIVO (PRODUCTIVE)**: Requer ação, decisão ou resposta (suporte técnico, acompanhamento de caso, pedido de informação, agendamento, aprovação, bloqueio, cobrança que exige retorno).
-- **IMPRODUTIVO (UNPRODUCTIVE)**: Não exige ação imediata (felicitações, agradecimentos simples, mensagem social sem pedido, newsletter genérica, divulgação, confirmação automática sem necessidade de resposta).
-- **UNCLASSIFIED**: Insuficiente/ambíguo, ilegível, corrompido, vazio, decorativo.
+DEFINIÇÕES (Português -> Enum):
+- PRODUTIVO (PRODUCTIVE): Apenas para e-mails sérios, relacionados a trabalho, assuntos corporativos ou temas realmente importantes (ex: decisões, solicitações de trabalho, suporte técnico, cobranças, aprovações, bloqueios, informações críticas). Convites informais, eventos sociais, mensagens pessoais ou qualquer assunto fora do escopo corporativo NÃO devem ser classificados como PRODUCTIVE.
+- IMPRODUTIVO (UNPRODUCTIVE): Não exige ação imediata ou não é relevante para o trabalho (felicitações, agradecimentos simples, convite informal, mensagem social, newsletter genérica, divulgação, confirmação automática sem necessidade de resposta, temas pessoais ou fora do contexto corporativo).
+- UNCLASSIFIED: Insuficiente/ambíguo, ilegível, corrompido, vazio, decorativo.
 
-## REGRAS RÁPIDAS:
-- Pedido explícito ou follow-up ➜ **PRODUCTIVE**
-- Cortesia sem pedido ➜ **UNPRODUCTIVE**
-- Promo/marketing sem obrigação de resposta ➜ **UNPRODUCTIVE**
-- Sem contexto útil ➜ **UNCLASSIFIED**
-- Responda sempre em **Português**
+REGRAS RÁPIDAS:
+- Só classifique como PRODUCTIVE se for algo sério, de trabalho ou importante
+- Convite informal, evento social ou tema pessoal ➜ UNPRODUCTIVE
+- Cortesia sem pedido ➜ UNPRODUCTIVE
+- Promo/marketing sem obrigação de resposta ➜ UNPRODUCTIVE
+- Sem contexto útil ➜ UNCLASSIFIED
+- Responda sempre em Português
 
-## RESUMO EM MARKDOWN:
+RESUMO:
 - Manter idioma original
-- **NÃO inventar fatos**
+- NÃO inventar fatos
 - Remover assinaturas, disclaimers, rodapés legais, descadastro, rastreadores
-- Se promocional: usar **negrito** para destacar a oferta principal
-- Se sem conteúdo: summary = "*Sem conteúdo relevante.*" e classification = UNCLASSIFIED
-- Use **negrito** para informações importantes
-- Use *itálico* para ênfase secundária
-- Use \`code\` para referências técnicas, números de caso, códigos
+- Se promocional: destacar a oferta principal no texto
+- Se sem conteúdo: summary = "Sem conteúdo relevante." e classification = UNCLASSIFIED
+- Use frases claras e objetivas
+- Use \n para separar tópicos ou itens quando apropriado
 
-## FORMATAÇÃO MARKDOWN:
-- **Informações críticas**: negrito
-- *Detalhes complementares*: itálico
-- \`Referências técnicas\`: código inline
-- Use listas quando apropriado:
-  - Item 1
-  - Item 2
-
-## CONSTRANGIMENTOS:
+CONSTRANGIMENTOS:
 - Não incluir classificação dentro do resumo
-- **SEMPRE usar formatação Markdown apropriada**
+- NÃO usar formatação Markdown
 - Se múltiplos tópicos: priorizar o mais acionável
 
-Retorne somente dados válidos para o schema com summary formatado em Markdown.`;
+Retorne somente dados válidos para o schema com summary em texto plano, sem formatação Markdown, mas pode usar \n para separar tópicos.`;
 
     const response = await this.openai.responses.parse({
       model: this.defaultModel,
@@ -108,29 +100,29 @@ Retorne somente dados válidos para o schema com summary formatado em Markdown.`
 
     const SYSTEM_PROMPT = `Você é um assistente especializado em SUGERIR RESPOSTAS para e-mails e DEVE produzir saída estritamente compatível com o schema.
 
-## TAREFA:
+TAREFA:
 Gerar uma RESPOSTA SUGERIDA apropriada baseada na classificação e conteúdo do e-mail.
 
-## DIRETRIZES POR CLASSIFICAÇÃO:
+DIRETRIZES POR CLASSIFICAÇÃO:
 
-### PRODUCTIVE (E-mails que requerem ação):
+PRODUCTIVE (E-mails que requerem ação):
 - Resposta deve ser profissional e direta
 - Abordar especificamente o que foi solicitado
 - Incluir próximos passos quando apropriado
 - Tom colaborativo e solucionador
 
-### UNPRODUCTIVE (E-mails de cortesia/informativos):
+UNPRODUCTIVE (E-mails de cortesia/informativos):
 - Resposta deve ser cordial e breve
 - Agradecer quando apropriado
 - Confirmar recebimento se necessário
 - Tom amigável mas conciso
 
-### UNCLASSIFIED (E-mails ambíguos):
+UNCLASSIFIED (E-mails ambíguos):
 - Resposta deve solicitar esclarecimentos
 - Ser educado e profissional
 - Oferecer alternativas de contato se necessário
 
-## REGRAS GERAIS:
+REGRAS GERAIS:
 - Manter tom profissional e cordial
 - Responder sempre em Português
 - Ser específico ao conteúdo do e-mail
@@ -139,20 +131,20 @@ Gerar uma RESPOSTA SUGERIDA apropriada baseada na classificação e conteúdo do
 - Máximo 500 caracteres
 - Ser direto e objetivo
 
-## FORMATAÇÃO:
+FORMATAÇÃO:
 - NÃO usar formatação Markdown na resposta
 - Use quebras de linha (\n) quando necessário para organizar o texto
 - Separe parágrafos ou ideias diferentes com quebras de linha
 - Mantenha texto limpo e legível
 
-## CONSTRANGIMENTOS:
+CONSTRANGIMENTOS:
 - NÃO inventar informações não mencionadas no e-mail original
 - NÃO fazer promessas que não podem ser cumpridas
 - NÃO incluir dados pessoais ou confidenciais
 - Manter contexto do assunto original
 - NÃO usar formatação Markdown (negrito, itálico, listas, etc.)
 
-Retorne somente a resposta sugerida válida para o schema, sem formatação Markdown mas com quebras de linha quando necessário.`;
+Retorne somente a resposta sugerida válida para o schema, em texto plano, sem formatação Markdown, mas pode usar \n para separar ideias quando necessário.`;
 
     const response = await this.openai.responses.parse({
       model: this.defaultModel,
