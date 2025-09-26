@@ -1,75 +1,74 @@
-# Nuxt Minimal Starter
+# Email Classifier Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Este projeto é o frontend do Email Classifier, uma aplicação web para classificação automática de e-mails utilizando inteligência artificial. Desenvolvido com [Nuxt 3](https://nuxt.com/) e [TypeScript](https://www.typescriptlang.org/).
 
-## Setup
+## Funcionalidades
 
-Make sure to install dependencies:
+-   Interface amigável para classificação de e-mails
+-   Consumo de API para classificação automática
+-   Visualização de resultados de classificação
+-   Design responsivo
 
-```bash
-# npm
-npm install
+## Estrutura do Projeto
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+```
+email-classifier.frontend/
+├── app/
+│   ├── components/         # Componentes Vue reutilizáveis
+│   ├── composables/        # Composables para lógica reutilizável
+│   ├── pages/              # Páginas da aplicação
+│   ├── plugins/            # Plugins Nuxt
+│   └── utils/              # Funções utilitárias e tipos
+├── public/                 # Arquivos públicos (favicon, robots.txt, etc)
+├── assets/                 # Arquivos estáticos (CSS, imagens, lottie)
+├── nuxt.config.ts          # Configuração do Nuxt
+├── package.json            # Dependências e scripts
+├── tsconfig.json           # Configuração do TypeScript
+└── README.md               # Este arquivo
 ```
 
-## Development Server
+## Instalação
 
-Start the development server on `http://localhost:3000`:
+1. Clone o repositório:
+    ```sh
+    git clone https://github.com/Lucas-Gardini/email-classifier.git
+    cd email-classifier/email-classifier.frontend
+    ```
+2. Instale as dependências:
+    ```sh
+    npm install
+    ```
 
-```bash
-# npm
+## Executando o Projeto
+
+Para rodar o ambiente de desenvolvimento:
+
+```sh
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Acesse [http://localhost:3000](http://localhost:3000) no navegador.
 
-Build the application for production:
+## Scripts Disponíveis
 
-```bash
-# npm
-npm run build
+-   `npm run dev` — Inicia o servidor de desenvolvimento
+-   `npm run build` — Gera a versão de produção
+-   `npm run preview` — Visualiza a build de produção localmente
+-   `npm run lint` — Executa o linter
 
-# pnpm
-pnpm build
+## Configuração
 
-# yarn
-yarn build
+-   As configurações principais estão em `nuxt.config.ts`.
+-   Variáveis de ambiente podem ser definidas em `.env`.
 
-# bun
-bun run build
-```
+## Contribuição
 
-Locally preview production build:
+Pull requests são bem-vindos! Para contribuir:
 
-```bash
-# npm
-npm run preview
+1. Crie um fork do projeto
+2. Crie uma branch para sua feature ou correção
+3. Envie um pull request
 
-# pnpm
-pnpm preview
+## Licença
 
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Este projeto está sob a licença MIT.
