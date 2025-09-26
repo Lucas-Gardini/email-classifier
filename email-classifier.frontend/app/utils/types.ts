@@ -1,7 +1,7 @@
 export interface IEmailResponse {
 	success: boolean;
-	data: [
-		{
+	data: {
+		items: {
 			_id: string;
 			subject: string;
 			sender: string;
@@ -14,8 +14,11 @@ export interface IEmailResponse {
 				suggestedResponse: string;
 				summary: string;
 			};
-		}
-	];
+		}[];
+		total: number;
+		page: number;
+		limit: number;
+	};
 	status: number;
 	message?: string;
 }
@@ -25,4 +28,14 @@ export interface IClassifyResponse {
 	data: string;
 	message: string;
 	status: number;
+}
+
+export interface IFilters {
+	id: string;
+	subject: string;
+	sender: string;
+	body: string;
+	status: string;
+	page: number;
+	limit: number;
 }

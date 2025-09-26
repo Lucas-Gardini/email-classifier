@@ -8,7 +8,7 @@ const classifying = ref(false);
 const classificationId = ref<string | null>(null);
 const poolingInterval = ref<NodeJS.Timeout | string | number | undefined>();
 
-const classificationData = ref<IEmailResponse["data"][0] | null>(null);
+const classificationData = ref<IEmailResponse["data"]["items"][0] | null>(null);
 
 function classifyEmail() {
 	if (classificationData.value && classificationData.value?.status !== "pending") {
@@ -34,11 +34,11 @@ function onData(data: string) {
 
 		try {
 			if (request.status === 200 && request.success) {
-				if (request.data[0]?.status === "error") throw new Error("A classificação falhou. Por favor, tente novamente.");
+				if (request.data.items[0]?.status === "error") throw new Error("A classificação falhou. Por favor, tente novamente.");
 
-				classificationData.value = request.data[0];
+				classificationData.value = request.data.items[0]!;
 
-				if (request.data[0]?.status === "pending") return; // Ainda processando
+				if (request.data.items[0]?.status === "pending") return; // Ainda processando
 
 				classifying.value = false;
 				classificationId.value = null;
@@ -60,24 +60,12 @@ function onError(error: string | unknown) {
 	toast.add({ title: "Erro", description: typeof error === "string" ? error : "Ocorreu um erro ao classificar o email.", color: "error" });
 	classifying.value = false;
 }
-
-function copySuggestion() {
-	if (classificationData.value?.suggestion.suggestedResponse) {
-		navigator.clipboard.writeText(classificationData.value.suggestion.suggestedResponse);
-		toast.add({ title: "Copiado", description: "Sugestão de resposta copiada para a área de transferência.", color: "success" });
-	}
-}
 </script>
 
 <template>
 	<UContainer class="grid grid-cols-1 md:grid-cols-12 gap-4 py-4 items-start">
-		<section class="col-span-12 text-center py-6 px-6">
-			<h1 class="text-4xl md:text-5xl font-bold">Classificação de Emails <span class="text-primary">com IA</span></h1>
-			<p class="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
-				Classifique automaticamente emails e gere sugestões inteligentes de resposta usando tecnologia avançada de IA.
-			</p>
-		</section>
-		<!-- style="min-height: 505px; max-height: 505px" -->
+		<Hero />
+
 		<UCard class="col-span-12 md:col-span-6">
 			<template #header>
 				<div class="flex items-center">
@@ -147,7 +135,7 @@ function copySuggestion() {
 									? "Produtivo"
 									: classificationData?.classification === "unproductive"
 									? "Improdutivo"
-									: "Não Classificado"
+									: "Sem Classificação"
 							}}
 						</UBadge>
 					</div>
@@ -166,34 +154,7 @@ function copySuggestion() {
 			</div>
 			<!-- Resultado da análise -->
 			<div v-else-if="classificationData && classificationData.suggestion" class="flex flex-col gap-6">
-				<!-- Resumo -->
-				<div>
-					<h3 class="text-lg font-semibold mb-2">Resumo</h3>
-					<MDC class="text-sm" :value="classificationData.suggestion.summary" tag="article" />
-				</div>
-
-				<!-- Sugestão de resposta -->
-				<div>
-					<h3 class="text-lg font-semibold mb-2">Sugestão de Resposta</h3>
-					<MDC class="text-sm" :value="classificationData.suggestion.suggestedResponse" tag="article" />
-					<div class="flex justify-end mt-3">
-						<UTooltip text="Copiar sugestão">
-							<UButton size="sm" variant="ghost" color="primary" icon="fa6-regular:copy" @click="copySuggestion" />
-						</UTooltip>
-					</div>
-				</div>
-
-				<!-- Metadados -->
-				<div class="text-xs text-gray-500 flex flex-col sm:flex-row sm:justify-between mt-auto">
-					<span class="flex items-center gap-1">
-						<Icon name="fa6-regular:calendar" class="w-3 h-3" />
-						Criado em: {{ new Date(classificationData.createdAt).toLocaleString("pt-BR") }}
-					</span>
-					<span class="flex items-center gap-1">
-						<Icon name="fa6-regular:clock" class="w-3 h-3" />
-						Atualizado em: {{ new Date(classificationData.updatedAt).toLocaleString("pt-BR") }}
-					</span>
-				</div>
+				<Classification :classificationData="classificationData" />
 			</div>
 		</UCard>
 	</UContainer>
