@@ -1,6 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	app: {
+		baseURL: "/email-classifier/",
+
 		head: {
 			titleTemplate: "Email Classifier",
 			htmlAttrs: { lang: "pt-BR" },
