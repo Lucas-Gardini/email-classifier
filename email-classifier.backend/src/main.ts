@@ -21,12 +21,12 @@ async function bootstrap() {
     .setVersion("1.0.0")
     .addTag("health", "Verificação de saúde da aplicação")
     .addTag("emails", "Operações de listagem e classificação de emails")
-    .addServer(process.env.API_BASE_URL ?? "http://localhost:3000", "Servidor padrão")
+    .addServer(process.env.API_BASE_URL ?? "http://localhost:3001", "Servidor padrão")
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.BACK_PORT ?? 3001);
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Swagger is running on: ${await app.getUrl()}/api`);
   console.log(`CORS allowed origin: ${process.env.CORS_ORIGIN}`);
