@@ -26,7 +26,7 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);
 
-  await app.listen(process.env.BACK_PORT ?? 3001);
+  await app.listen(process.env.BACK_PORT ?? 3001, "0.0.0.0");
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Swagger is running on: ${await app.getUrl()}/api`);
   console.log(`CORS allowed origin: ${process.env.CORS_ORIGIN}`);
