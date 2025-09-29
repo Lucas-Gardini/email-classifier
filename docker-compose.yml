@@ -1,31 +1,35 @@
+# O que estiver comentado é opcional, dependendo se você quer usar Redis e MongoDB em containers separados ou não.
+# No caso do meu servidor de produção, os bancos estão independente da aplicação, então não preciso deles aqui.
+# Mesmo esquema para os arquivos .env, que no meu caso estão configurados diretamente no servidor.
+
 services:
   backend:
     build:
       context: ./email-classifier.backend
       dockerfile: Dockerfile
-    env_file:
-      - ./email-classifier.backend/.env
+    # env_file:
+    #   - ./email-classifier.backend/.env
     ports:
       - "3001:3001"
-    depends_on:
-      - redis
-      - mongo
+    # depends_on:
+    #   - redis
+    #   - mongo
 
   frontend:
     build:
       context: ./email-classifier.frontend
       dockerfile: Dockerfile
-    env_file:
-      - ./email-classifier.frontend/.env
+    # env_file:
+    #   - ./email-classifier.frontend/.env
     ports:
       - "3000:3000"
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
 
-  mongo:
-    image: mongo:8
-    ports:
-      - "27017:27017"
+  # mongo:
+  #   image: mongo:8
+  #   ports:
+  #     - "27017:27017"
